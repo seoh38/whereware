@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+ <mapper namespace="Calendar">
+  <resultMap id="calendarRM" type="Calendar">
+  	<id property="empNo" column="EMP_NO" />
+    <result property="calendarNo" column="CALENDAR_NO" />
+    <result property="calendarTitle" column="CALENDAR_TITLE" />
+    <result property="calendarMemo" column="CALENDAR_MEMO" />
+    <result property="calendarStart" column="CALENDAR_START" />
+    <result property="calendarEnd" column="CALENDAR_END" />
+  </resultMap>
+	
+	<select id="calendarList" resultMap="calendarRM" parameterType="map">
+		SELECT * FROM CALENDAR WHERE EMP_NO = #{empNo}
+	</select>
+	
+	<insert id="calendarInsert" parameterType="map">
+		INSERT INTO CALENDAR VALUES (#{empNo}, CALENDAR_NO_SEQ.NEXTVAL, #{calendarTitle}, NULL, #{calendarStart}, #{calendarEnd})
+	</insert>
+	
+	<delete id="calendarDelete" parameterType="map">
+		DELETE FROM CALENDAR WHERE CALENDAR_NO = #{calendarNo}
+	</delete>
+	
+</mapper>

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;WW/src/main/java/com/ww/mvc/document/controller/document_controller.java&apos; to &apos;Document_controller.java&apos;" description="Rename resource &apos;document_controller.java&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/main/java/com/ww/mvc/document/controller/document_controller.java" name="Document_controller.java" stamp="1647103725046" updateReferences="true"/>
+</session>

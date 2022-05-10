@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ww.mvc.board.model.dao.BoardMapper">
+
+	<sql id="boardListSql">
+		SELECT B.BOARD_NO,
+		E.EMP_ID,
+		E.EMP_NAME,
+		B.BOARD_WRITER,
+		B.BOARD_TITLE,
+		B.BOARD_CONTENT,
+		B.BOARD_CREATED,
+		B.BOARD_MODIFIED,
+		B.BOARD_HITS
+		FROM BOARD B
+		JOIN EMPLOYEE E ON(B.EMP_NO = E.EMP_NO)
+	</sql>
+	
+	<!-- ▼ Board ResultMap -->
+  	<resultMap type="Board" id="boardListResultMap">
+  		<id property="no" column="BOARD_NO"/>
+  		<result property="empNo" column="EMP_NO"/>
+  		<result property="writer" column="EMP_NAME"/>
+  		<result property="title" column="BOARD_TITLE"/>
+  		<result property="content" column="BOARD_CONTENT"/>	
+  		<result property="createDate" column="BOARD_CREATED"/>
+  		<result property="modifyDate" column="BOARD_MODIFIED"/>
+  		<result property="hits" column="BOARD_HITS"/>
+  		<result property="replyCount" column="COMMENT_COUNT"/>
+  	</resultMap>
+  	
+  	<!-- ▼ Reply ResultMap -->
+	<resultMap type="Reply" id="replyResultMap">
+		<id property="no" column="COMMENT_NO"/>
+		<result property="boardNo" column="BOARD_NO"/>
+		<result property="empNo" column="EMP_NO"/>
+		<result property="writer" column="EMP_NAME"/>
+		<result property="content" column="COMMENT_CONTENT"/>
+		<result property="createDate" column="B_COMMENT_CREATED"/>
+		<result property="modifyDate" column="B_COMMENT_MODIFIED"/>
+	</resultMap>
+	
+	<!-- ▼ Board_Attach ResultMap -->
+	<resultMap type="BoardAttach" id="boardAttachListResultMap">
+		<id property="fileNo" column="FILE_NO" />
+		<result property="boardNo" column="BOARD_NO"/>
+		<result property="empNo" column="EMP_NO" />
+		<result property="originalFileName" column="ORIGINAL_FILENAME" />
+		<result property="renamedFileName" column="RENAMED_FILENAME" />
+		<result property="uploadPath" column="FILE_UPLOADPATH" />
+		<result property="fileSize" column="FILE_SIZE" />
+		<result property="fileType" column="FILE_TYPE" />
+		<result property="regDate" column="REG_DATE" />
+	</resultMap>
+
+	<resultMap type="Board" extends="boardListResultMap" id="boardDetailResultMap">
+		<collection property="replies" javaType="arraylist" resultMap="replyResultMap"/>
+	</resultMap>
+  	
+	<!-- 페이징 -->
+	<select id="getBoardCount" parameterType="map" resultType="_int">
+		SELECT COUNT(*)
+		FROM BOARD
+		<choose>
+			<when test="searchType = title">
+				AND B.BOARD_TITLE LIKE '%' || #{title} ||'%'
+			</when>
+			<when test="searchType = writer">
+				AND E.EMP_NAME LIKE '%' || #{writer} ||'%'
+			</when>
+			<when test="searchType = content">
+				AND B.BOARD_CONTENT LIKE '%' || #{content} ||'%'
+			</when>
+		</choose>
+	</select>
+
+	<select id="findAll" parameterType="map" resultMap="boardListResultMap">
+		<include refid="boardListSql" />
+
+		<choose>
+			<when test="searchType = title">
+				AND B.BOARD_TITLE LIKE '%' || #{title} ||'%'
+			</when>
+			<when test="searchType = writer">
+				AND E.EMP_NAME LIKE '%' || #{writer} ||'%'
+			</when>
+			<when test="searchType = content">
+				AND B.BOARD_CONTENT LIKE '%' || #{content} ||'%'
+			</when>
+		</choose>
+		ORDER BY B.BOARD_NO DESC
+	</select>
+	
+	
+	<!-- 게시글 검색 -->
+	<select id="searchCount" parameterType="map" resultType="_int">
+		SELECT COUNT(*)
+		FROM BOARD
+			<trim prefix="WHERE" prefixOverrides="AND|OR">
+				<if test="searchType=='title' and keyword != null and keyword != '' ">
+					AND B.BOARD_TITLE LIKE '%' || #{keyword}  || '%'
+				</if>
+				<if test="searchType=='content' and keyword != null and keyword != '' ">
+					AND B.BOARD_CONTENT LIKE '%' || #{keyword}  || '%'
+				</if>
+				<if test="searchType=='writer' and keyword != null and keyword != '' ">
+					AND WHERE E.EMP_NAME LIKE '%' || #{keyword}  || '%'
+				</if>
+			</trim>
+	</select>
+	
+	<select id="searchBoard" parameterType="map" resultMap="boardListResultMap">
+		<include refid="boardListSql" />
+
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+			<if test="searchType=='title' and keyword != null and keyword != '' ">
+				AND B.BOARD_TITLE LIKE '%' || #{keyword}  || '%'
+			</if>
+			<if test="searchType=='content' and keyword != null and keyword != '' ">
+				AND B.BOARD_CONTENT LIKE '%' || #{keyword}  || '%'
+			</if>
+			<if test="searchType=='writer' and keyword != null and keyword != '' ">
+				AND E.EMP_NAME LIKE '%' || #{keyword}  || '%'
+			</if>	
+		</trim>
+		ORDER BY B.BOARD_NO DESC
+	</select>
+	
+	<!-- 게시글 조회수 -->
+	<update id="plusHits" parameterType="_int">
+		UPDATE BOARD 
+			SET BOARD_HITS = BOARD_HITS + 1
+			WHERE BOARD_NO = #{no}
+	</update>
+	
+	<!-- 게시글 상세조회 -->
+  	<select id="selectBoardByNo" parameterType="_int" resultMap="boardDetailResultMap">
+			SELECT B.BOARD_NO AS,
+			       B.BOARD_TITLE, 
+			       B.EMP_NO, 
+			       B.BOARD_WRITER,
+			       E.EMP_ID, 
+			       E.EMP_NAME, 
+			       B.BOARD_HITS, 
+			       B.BOARD_CONTENT,
+			       B.BOARD_CREATED, 
+			       B.BOARD_MODIFIED,
+			       C.COMMENT_NO, 
+			       C.COMMENT_WRITER,
+			       C.BOARD_NO, 
+			       C.COMMENT_CONTENT, 
+			       C.EMP_NO,
+			       E2.EMP_ID, 
+			       C.B_COMMENT_CREATED, 
+			       C.B_COMMENT_MODIFIED,
+			       B.COMMENT_COUNT,
+			       A.ORIGINAL_FILENAME
+			FROM BOARD B
+			JOIN EMPLOYEE E ON(B.EMP_NO = E.EMP_NO)
+			LEFT OUTER JOIN BOARD_COMMENT C ON(B.BOARD_NO = C.BOARD_NO)
+			LEFT OUTER JOIN EMPLOYEE E2 ON(C.EMP_NO = E2.EMP_NO)
+			LEFT OUTER JOIN BOARD_ATTACH A ON(B.BOARD_NO = A.BOARD_NO)
+			WHERE B.BOARD_NO = #{no}
+			ORDER BY C.COMMENT_NO DESC
+  	 </select>
+	
+	
+	<!-- 게시글 작성 -->
+	<insert id="insertBoard" parameterType="Board" useGeneratedKeys="true" keyProperty="no" keyColumn="BOARD_NO">
+		INSERT INTO BOARD(
+			BOARD_NO,
+			BOARD_WRITER,
+			EMP_NO,
+			BOARD_TITLE,
+			BOARD_CONTENT,
+			BOARD_CREATED,
+			BOARD_MODIFIED,
+			BOARD_HITS
+		) VALUES(
+			SEQ_BOARD_NO.NEXTVAL,
+			#{writer},
+			#{empNo},
+			#{title},
+			#{content},
+			DEFAULT,
+			DEFAULT,
+			DEFAULT
+		)
+	</insert>
+	
+	<!-- 파일 삭제를 위한 파일 단건 조회 -->
+	<select id="selectBoardAttachByNo" parameterType="_int" resultMap="boardAttachListResultMap">
+		SELECT  FILE_NO,
+				BOARD_NO,
+				EMP_NO,
+				ORIGINAL_FILENAME,
+				RENAMED_FILENAME,
+				FILE_SIZE
+		FROM BOARD_ATTACH
+		WHERE FILE_NO = ${no}
+	</select>
+	
+	<!-- 파일 등록 -->
+	<insert id="insertFile" parameterType="BoardAttach" useGeneratedKeys="true" keyProperty="fileNo" keyColumn="FILE_NO">
+		INSERT INTO BOARD_ATTACH(
+			FILE_NO,
+			BOARD_NO,
+			EMP_NO,
+			ORIGINAL_FILENAME,
+			RENAMED_FILENAME,
+			FILE_UPLOADPATH,
+			FILE_SIZE,
+			FILE_TYPE,
+			REG_DATE
+		) VALUES (
+			SEQ_BOARDATTACH_NO.NEXTVAL,
+			#{boardNo},
+			#{empNo},
+			#{originalFileName},
+			#{renamedFileName},
+			#{uploadPath},
+			#{fileSize},
+			#{fileType},
+			DEFAULT
+		)
+	</insert>
+	
+	<!-- 파일 삭제 -->
+	<delete id="deleteFile" parameterType="BoardAttach">
+		DELETE FROM BOARD_ATTACH WHERE FILE_NO = #{no}
+	</delete>
+	
+	<!-- 게시글 수정 -->
+	<update id="updateBoard" parameterType="Board">
+		UPDATE BOARD
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="title != null">
+				BOARD_TITLE = #{title},
+			</if>
+			<if test="content != null">
+				BOARD_CONTENT = #{content},
+			</if>
+				BOARD_CREATED = SYSDATE
+		</trim>
+		WHERE BOARD_NO = #{no}
+	</update>
+	
+	<!-- 게시글 삭제 -->
+	<delete id="deleteBoard" parameterType="Board">
+		DELETE FROM BOARD WHERE BOARD_NO = #{no}
+	</delete>
+
+	<!-- 댓글 개수 -->
+	<select id="getReplyCount" parameterType="map" resultType="_int">
+		SELECT COUNT(COMMENT_NO)
+		FROM BOARD_COMMENT
+		WHERE BOARD_NO = #{no}
+	</select>
+	
+	<update id="updateReplyCount" parameterType="_int">
+		UPDATE BOARD 
+			SET COMMENT_COUNT = (
+				SELECT COUNT(COMMENT_NO) 
+				FROM BOARD_COMMENT 
+				WHERE BOARD_NO = #{no} 
+			)
+			WHERE BOARD_NO = #{no}
+	
+	</update>
+	
+	<select id="selectReplyListByNo" parameterType="_int" resultMap="replyResultMap">
+		SELECT  B.BOARD_NO, 
+				C.COMMENT_NO, 
+				E.EMP_NO, 
+				E.EMP_NAME, 
+				C.COMMENT_WRITER, 
+				C.COMMENT_CONTENT, 
+				C.B_COMMENT_CREATED
+		FROM BOARD_COMMENT C
+		JOIN EMPLOYEE E ON (C.EMP_NO = E.EMP_NO)
+		JOIN BOARD B ON (C.BOARD_NO = B.BOARD_NO)
+		WHERE B.BOARD_NO = #{no}
+		ORDER BY C.B_COMMENT_CREATED DESC
+	</select>
+	
+	<!-- 댓글 삭제를 위한 댓글 단건 조회 -->
+	<select id="selectReplyByNo" parameterType="_int" resultMap="replyResultMap">
+			SELECT  COMMENT_NO,
+					BOARD_NO,
+					EMP_NO
+		FROM BOARD_COMMENT
+		WHERE COMMENT_NO = ${no}
+	</select>
+	
+	<!-- 댓글 등록 -->
+	<insert id="insertReply" parameterType="map" useGeneratedKeys="true" keyProperty="no" keyColumn="COMMENT_NO">
+		INSERT INTO BOARD_COMMENT (
+			COMMENT_NO,
+			BOARD_NO,
+			EMP_NO,
+			COMMENT_WRITER,
+			COMMENT_CONTENT,
+			B_COMMENT_CREATED,
+			B_COMMENT_MODIFIED
+		) VALUES (
+			SEQ_COMMENT_NO.NEXTVAL,
+			#{boardNo},
+			#{empNo},
+			#{writer},
+			#{content},
+			SYSDATE,
+			SYSDATE
+		)
+	</insert>
+	
+	
+	<!-- 댓글 수정 -->
+	<update id="updateReply" parameterType="map">
+		UPDATE BOARD_COMMENT
+	      SET 
+	         COMMENT_CONTENT = #{content},
+	         B_COMMENT_CREATED = SYSDATE 
+	      WHERE 
+	         COMMENT_NO = #{no}
+	</update>
+	
+	<!-- 댓글 삭제 -->
+	<delete id="deleteReply" parameterType="Reply" >
+		DELETE FROM BOARD_COMMENT WHERE COMMENT_NO = #{no}
+	</delete>
+	
+	
+	<!-- 첨부 파일 리스트 조회 -->
+	<select id="findByBoardNo" parameterType="_int" resultMap="boardAttachListResultMap">
+		SELECT  FILE_NO, 
+				BOARD_NO, 
+				EMP_NO, 
+				ORIGINAL_FILENAME, 
+				RENAMED_FILENAME  
+		FROM BOARD_ATTACH 
+		WHERE BOARD_NO = #{no}
+	</select>
+	
+	
+</mapper>

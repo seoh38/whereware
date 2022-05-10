@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.ww.mvc.member.model.dao.MemberMapper">
+	<sql id="selectMemberSql">
+		SELECT EMP_NO, 
+			   JOB_CODE, 
+			   DEPT_CODE, 
+       		   EMP_ID, 
+	       	   EMP_PWD, 
+    	   	   EMP_NAME, 
+	       	   EMP_EMAIL, 
+       		   EMP_PHONE,  
+       		   SALARY, 
+       		   HIRE_DATE,  
+       		   END_DATE, 
+       		   END_YN, 
+       		   ADMIN_YN, 
+       		   ENROLL_YN, 
+       		   ORIGINAL_PROFILENAME, 
+       		   RENAMED_PROFILENAME, 
+       		   EMP_ADDRESS,
+       		   STATUS
+		FROM EMPLOYEE
+		WHERE STATUS = 'Y'
+	</sql>
+	
+	<resultMap type="Member" id="MemberResultMap">
+		<!-- 테이블에서 기본 키를 의미(primaryKey) -->
+		<id property="no" column="EMP_NO"/>
+		<!-- 테이블에서 일반 컬럼들을 의미 -->
+		<result property="jobCode" column="JOB_CODE"/>
+		<result property="deptCode" column="DEPT_CODE"/>
+		<result property="id" column="EMP_ID"/>
+		<result property="password" column="EMP_PWD"/>
+		<result property="name" column="EMP_NAME"/>
+		<result property="email" column="EMP_EMAIL"/>
+		<result property="phone" column="EMP_PHONE"/>
+		<result property="birth" column="EMP_BIRTH"/>
+		<result property="address" column="EMP_ADDRESS"/>
+		<result property="salary" column="SALARY"/>
+		<result property="hireDate" column="HIRE_DATE"/>
+		<result property="endDate" column="END_DATE"/>
+		<result property="endStatus" column="END_YN"/>
+		<result property="adminStatus" column="ADMIN_YN"/>
+		<result property="enrollStatus" column="ENROLL_YN"/>
+		<result property="originalProfilename" column="ORIGINAL_PROFILENAME"/>
+		<result property="renamedProfilename" column="RENAMED_PROFILENAME"/>
+		<result property="status" column="STATUS"/>
+	</resultMap>
+
+	<select id="selectCount" resultType="_int">
+		SELECT COUNT(*) FROM EMPLOYEE
+	</select>
+	
+	<select id="selectAll">
+		<include refid="selectMemberSql"/>
+		AND END_YN = 'N'
+	</select>
+	
+	<!-- member no로 찾기 -->
+	<select id="findMemberByNo" parameterType="_int" resultMap="MemberResultMap">
+		<include refid="selectMemberSql"/>
+		AND EMP_NO = #{no}	
+	</select>
+	
+	<!-- 아이디로 찾기! -->
+	<select id="findMemberById" parameterType="string" resultMap="MemberResultMap">
+		<include refid="selectMemberSql"/>
+		AND EMP_ID = #{id}	
+	</select>
+	
+	<!-- 회원 가입 INSERT -->
+	<insert id="insertMember" parameterType="Member" 
+			useGeneratedKeys="true" keyProperty="no" keyColumn="EMP_NO">
+		INSERT INTO EMPLOYEE (
+			EMP_NO, 
+			EMP_ID, 
+			EMP_PWD, 
+			EMP_NAME,  
+			EMP_EMAIL,  
+			EMP_PHONE, 
+			EMP_BIRTH, 
+			EMP_ADDRESS, 
+			ORIGINAL_PROFILENAME, 
+			RENAMED_PROFILENAME, 
+			STATUS
+		) VALUES (
+			SEQ_EMP_NO.NEXTVAL, 		
+			#{id}, 
+			#{password}, 
+			#{name}, 
+			#{email}, 
+			#{phone}, 
+			#{birth}, 
+			#{address},
+			#{originalProfilename},
+			#{renamedProfilename},
+			DEFAULT	
+		)
+	</insert>
+	
+	<!-- 회원정보 업데이트 -->
+	<update id="updateMember" parameterType="Member">
+		UPDATE EMPLOYEE 
+		SET 
+			<if test="originalProfilename != null">
+		    ORIGINAL_PROFILENAME= #{originalProfilename},
+		    </if>
+		    <if test="renamedProfilename != null">
+		    RENAMED_PROFILENAME = #{renamedProfilename},
+		    </if>
+			EMP_ID = #{id},
+			EMP_NAME = #{name},
+			EMP_PHONE = #{phone},
+			EMP_EMAIL = #{email},
+			EMP_ADDRESS = #{address}
+		WHERE EMP_NO = #{no}
+	</update>
+	
+	<select id="selectMember" parameterType="string" resultMap="MemberResultMap">
+		<include refid="selectMemberSql"></include>
+	 	AND EMP_ID = #{id}
+	</select>
+		
+	<!-- 아이디 찾기 -->
+	<select id="findId" parameterType="Member" resultType="String">
+		SELECT EMP_ID
+		FROM EMPLOYEE 
+		WHERE STATUS ='Y' AND 
+				EMP_NAME= #{name} AND 
+	         	EMP_EMAIL= #{email}
+	</select>
+	
+	<!-- 비밀번호 찾기 -->
+	<select id="findPwd" parameterType="Member" resultType="hashMap" >
+		SELECT EMP_PWD 	
+		FROM EMPLOYEE 
+		WHERE STATUS ='Y' AND  
+				EMP_NAME= #{name} AND
+				EMP_ID= #{id} AND
+	         	EMP_EMAIL= #{email} AND
+	         	 EMP_PWD =#{password}
+	</select>
+	
+	<!-- 비밀번호 변경 -->
+	<update id="updatePwd">
+		UPDATE EMPLOYEE 
+		SET EMP_PWD = #{password} 
+		WHERE EMP_ID = #{id}
+	</update>
+	
+	<!-- 임시 비밀번호로 업데이트하는 쿼리 -->
+	<update id="searchPassword" parameterType="Map" >
+	 	UPDATE EMPLOYEE 
+	 	SET
+		    EMP_PWD=#{key}
+		WHERE 
+		    EMP_ID=#{id}
+		AND
+			EMP_EMAIL=#{email}
+
+	</update>
+	
+	<!-- 회원 탈퇴 -->
+	<delete id="deleteMember" parameterType="Member">
+		UPDATE EMPLOYEE
+		SET STATUS = 'N'
+		WHERE EMP_NO = #{no}	
+	</delete>
+	
+</mapper>

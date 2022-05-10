@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="employeeMapper">
+	<sql id="selectEmployeeSql">
+		SELECT EMP_NO, 
+       		   EMP_ID, 
+	       	   EMP_PWD, 
+    	   	   EMP_NAME, 
+	       	   EMP_EMAIL, 
+       		   EMP_PHONE,  
+       		   EMP_ADDRESS, 
+       		   SALARY, 
+       		   HIRE_DATE,  
+       		   END_DATE, 
+       		   END_YN, 
+       		   ADMIN_YN,
+       		   ENROLL_YN, 
+       		   ORIGINAL_PROFILENAME, 
+       		   RENAMED_PROFILENAME 	   
+		FROM EMPLOYEE
+	</sql>
+	
+	<resultMap type="Employee" id="EmployeeResultMap">
+		<!-- 테이블에서 기본 키를 의미(primaryKey) -->
+		<id property="no" column="EMP_NO"/>
+		<!-- 테이블에서 일반 컬럼들을 의미 -->
+		<result property="id" column="EMP_ID"/>
+		<result property="password" column="EMP_PWD"/>
+		<result property="name" column="EMP_NAME"/>
+		<result property="email" column="EMP_EMAIL"/>
+		<result property="phone" column="EMP_PHONE"/>
+		<result property="birth" column="EMP_BIRTH"/>
+		<result property="address" column="EMP_ADDRESS"/>
+		<result property="salary" column="SALARY"/>
+		<result property="hireDate" column="HIRE_DATE"/>
+		<result property="endDate" column="END_DATE"/>
+		<result property="endStatus" column="END_YN"/>
+		<result property="adminStatus" column="ADMIN_YN"/>
+		<result property="enrollStatus" column="ENROLL_YN"/>
+		<result property="originalProfilename" column="ORIGINAL_PROFILENAME"/>
+		<result property="renamedProfilename" column="RENAMED_PROFILENAME"/>
+	</resultMap>
+
+	<select id="selectCount" resultType="_int">
+		SELECT COUNT(*) FROM EMPLOYEE
+	</select>
+	
+	<select id="selectAll">
+	
+	</select>
+	
+	<select id="findEmployeeById" parameterType="string" resultMap="EmployeeResultMap">
+		<include refid="selecEmployeeSql"/>
+		WHERE EMP_ID = #{id} AND END_YN = 'Y' 	
+	</select>
+	
+	<insert id="insertEmployee" parameterType="Employee"
+			useGeneratedKeys="true" keyProperty="no" keyColumn="no">
+		INSERT INTO EMPLOYEE (
+			EMP_NO, 
+			EMP_PWD, 
+			EMP_NAME, 
+			EMP_EMAIL, 
+			EMP_PHONE, 
+			EMP_BIRTH, 
+			EMP_ADDRESS
+		) VALUE (
+			SEQ_EMP_NO,
+			#{id},
+			#{password},
+			#{name},
+			#{email},
+			#{phone},
+			#{birth},
+			#{address}
+		)
+	</insert>
+</mapper>

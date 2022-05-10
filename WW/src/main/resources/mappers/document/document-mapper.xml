@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ww.mvc.document.model.dao.DocumentMapper">
+
+	<!-- ▼ document ResultMap -->
+  	<resultMap type="DOCUMENT" id="documentListResultMap">
+  		<id property="doc_id" column="DOC_ID"/>  		
+  		<result property="rownum" column="ROWNUM"/>
+  		<result property="emp_no" column="EMP_NO"/>
+  		<result property="emp_id" column="EMP_ID"/>
+  		<result property="doc_titile" column="DOC_TITLE"/>
+  		<result property="doc_content" column="DOC_CONTENT"/>
+  		<result property="doc_status" column="DOC_STATUS"/>	
+  		<result property="doc_emergency" column="DOC_EMERGENCY"/>
+  		<result property="doc_date" column="DOC_DATE"/>
+  		<result property="doc_complet_date" column="DOC_COMPLET_DATE"/>
+  		<result property="job_code" column="JOB_CODE"/>
+		<result property="dept_code" column="DEPT_CODE"/>
+		<result property="emp_id" column="EMP_ID"/>
+		<result property="emp_name" column="EMP_NAME"/>
+		<result property="admin_yn" column="ADMIN_YN"/>
+		<result property="emp_job_name" column="EMP_JOB_NAME"/>
+		<result property="like_name" column="LINK_NAME"/>
+		<result property="link_job_name" column="LINK_JOB_NAME"/>
+		<result property="link_no" column="LINK_NO"/>
+		
+  	</resultMap>
+  	
+
+  	
+  	<sql id="documentListSql">
+			SELECT D.DOC_ID,
+					D.DOC_TITLE,
+					E.EMP_ID,
+					L.LINK_ID,
+					D.DOC_DATE,
+		            A.ATTACH_ORIGIN,
+					L.DOC_STATUS,
+		            E.EMP_NO
+			FROM DOCUMENT D
+			JOIN EMPLOYEE E ON(D.EMP_NO = E.EMP_NO)
+			JOIN (SELECT L.DOC_ID,
+				         L.LINK_ID,
+				         S.DOC_STATUS
+				  FROM REPORT_LINK L
+	              JOIN DOC_STATUS S ON(S.DOC_STATUS_CODE = L.LINK_TYPE)
+				  WHERE (LINK_NUM) in (SELECT MAX(LINK_NUM) AS LINK_NUM
+					                       		FROM REPORT_LINK GROUP BY DOC_ID)
+				) L ON(L.DOC_ID = D.DOC_ID)
+	        JOIN (SELECT MAX(ATTACH_NUM), DOC_ID, MAX(ATTACH_ORIGIN) AS ATTACH_ORIGIN
+					FROM DOC_ATTACH GROUP BY DOC_ID
+				) A ON( A.DOC_ID = D.DOC_ID )
+			WHERE D.DOC_STATUS = 'Y'
+	</sql>
+  	
+
+	<!-- 문서 기본적인 리스트 불러오기 -->
+	<!-- 
+	<select id="getDocumentCount" parameterType="map" resultType="_int">
+		SELECT COUNT(*) 
+		FROM (	SELECT DOC_ID AS LINK_NUM
+        		FROM REPORT_LINK GROUP BY DOC_ID)
+	</select>
+	
+	<select id="documentfindAll" parameterType="map" resultMap="documentListResultMap">
+		SELECT ROWNUM , DOC_ID, DOC_TITLE, EMP_ID, LINK_ID, DOC_DATE, ATTACH_ORIGIN, DOC_STATUS
+        FROM(
+        
+        <include refid="documentListSql" />
+        		
+			ORDER BY D.DOC_ID DESC
+		)
+		
+	</select>
+ 	-->
+
+	<!-- 문서 검색한 리스트 불러오기 -->
+		<select id="getDocumentSearchCount" parameterType="map" resultType="_int">
+		SELECT COUNT(*) 
+		FROM (	 
+				
+			<include refid="documentListSql" />
+			
+				<if test="type=='title' and search != null and search != '' ">
+					AND D.DOC_TITLE LIKE '%'||#{search}||'%'
+				</if>
+				<if test="type=='sender' and search != null and search != '' ">
+					AND E.EMP_ID LIKE '%'||#{search}||'%'
+				</if>
+				<if test="type=='recipient' and search != null and search != '' ">
+					AND L.LINK_ID LIKE '%'||#{search}||'%'
+				</if>
+				<if test="type=='date' and search != null and search != '' ">
+					AND D.DOC_DATE LIKE '%'||#{search}||'%'
+				</if>
+				<if test="type=='attach' and search != null and search != '' ">
+					AND A.ATTACH_ORIGIN LIKE '%'||#{search}||'%'
+				</if>
+				<if test="type=='status' and search != null and search != '' ">
+					AND D.DOC_STATUS LIKE '%'||#{search}||'%'
+				</if>
+			)
+		</select>
+	
+	<select id="getDocumentSearchList" parameterType="map" resultMap="documentListResultMap">
+		SELECT ROWNUM , DOC_ID, DOC_TITLE, EMP_ID, LINK_ID, DOC_DATE, ATTACH_ORIGIN, DOC_STATUS
+        FROM(
+        
+        <include refid="documentListSql" />
+        
+				<if test="type=='title' and search != null and search != '' ">
+					AND D.DOC_TITLE LIKE '%'||#{search}||'%'
+				</if>
+				<if test="type=='sender' and search != null and search != '' ">
+					AND E.EMP_ID LIKE '%'||#{search}||'%'
+				</if>
+				<if test="type=='recipient' and search != null and search != '' ">
+					AND L.LINK_ID LIKE '%'||#{search}||'%'
+				</if>
+				<if test="type=='date' and search != null and search != '' ">
+					AND D.DOC_DATE LIKE '%'||#{search}||'%'
+				</if>
+				<if test="type=='attach' and search != null and search != '' ">
+					AND A.ATTACH_ORIGIN LIKE '%'||#{search}||'%'
+				</if>
+				<if test="type=='status' and search != null and search != '' ">
+					AND D.DOC_STATUS LIKE '%'||#{search}||'%'
+				</if>
+        		
+			ORDER BY D.DOC_ID DESC
+		)
+	</select>
+	
+	
+	<select id="getDocumentContent" parameterType="map" resultMap="documentListResultMap">
+	
+	SELECT  ROWNUM,
+        DOC_ID,
+        EMP_NAME,
+        EMP_JOB_NAME,
+        EMP_NO,
+        LINK_TYPE,
+        LINK_NAME,
+        LINK_JOB_NAME,
+        LINK_NUM,
+        LINK_NO,
+        LINK_DATE,
+        ATTACH_RENAME,
+        ATTACH_ORIGIN,
+        DOC_CONTENT,
+        DOC_TITLE,
+        DOC_STATUS 
+from (
+            SELECT L.DOC_ID,
+                    E1.EMP_NAME,
+                    J1.JOB_NAME AS EMP_JOB_NAME,
+                    L.EMP_NO,
+                    L.LINK_TYPE,
+                    E2.EMP_NAME AS LINK_NAME,
+                    J2.JOB_NAME AS LINK_JOB_NAME,
+                    L.LINK_NUM,
+                    L.LINK_NO,
+                    L.LINK_DATE,
+                    A.ATTACH_RENAME,
+                    A.ATTACH_ORIGIN,
+                    D.DOC_CONTENT,
+                    D.DOC_TITLE,
+                    S.DOC_STATUS
+            
+			FROM REPORT_LINK L
+			JOIN DOCUMENT D ON(D.DOC_ID = L.DOC_ID)
+			JOIN EMPLOYEE E1 ON(E1.EMP_NO = L.EMP_NO)
+            JOIN EMPLOYEE E2 ON(E2.EMP_NO = L.LINK_NO)
+            JOIN (SELECT E.EMP_NO, J.JOB_CODE, J.JOB_NAME FROM EMPLOYEE E JOIN JOB J ON(J.JOB_CODE = E.JOB_CODE)
+                ) J1 ON(J1.EMP_NO = L.EMP_NO)
+            JOIN (SELECT E.EMP_NO, J.JOB_CODE, J.JOB_NAME FROM EMPLOYEE E JOIN JOB J ON(J.JOB_CODE = E.JOB_CODE)
+                ) J2 ON(J2.EMP_NO = L.EMP_NO)
+            JOIN (SELECT A.ATTACH_NUM, A.DOC_ID, A.ATTACH_RENAME, A.ATTACH_ORIGIN
+					FROM DOC_ATTACH A 
+                    JOIN (SELECT MAX(ATTACH_NUM) AS ATTACH_NUM, DOC_ID
+                            FROM DOC_ATTACH  GROUP BY DOC_ID
+                        ) A1 ON(A1.ATTACH_NUM = A.ATTACH_NUM)
+				) A ON( A.DOC_ID = L.DOC_ID )
+            JOIN DOC_STATUS S ON (S.DOC_STATUS_CODE = L.LINK_TYPE)            
+         WHERE
+            L.DOC_ID LIKE #{doc_no}
+        order by LINK_NO DESC
+) WHERE ROWNUM = 1
+
+
+
+	</select>
+
+
+	
+	<insert id="getInsertDocument" parameterType="Document" useGeneratedKeys="true" keyProperty="doc_id" keyColumn="DOC_ID">
+		INSERT INTO DOCUMENT (
+			DOC_ID,
+			EMP_NO,
+			DOC_TITLE,
+			DOC_CONTENT,
+			DOC_STATUS,
+			DOC_EMERGENCY,
+			DOC_DATE,
+			DOC_COMPLET_DATE
+			)
+		VALUES(SEQ_DOC_ID.NEXTVAL,
+			#{emp_no},
+			#{doc_titile},
+			#{doc_content},
+			DEFAULT,
+			DEFAULT,
+			DEFAULT,
+			DEFAULT
+			)
+			
+	</insert>
+	
+	<insert id="InsertAttachDocument" parameterType="Document">
+
+		INSERT INTO DOC_ATTACH (
+			ATTACH_NUM,
+			DOC_ID,
+			ATTACH_ORIGIN,
+			ATTACH_RENAME,
+			ATTACH_EXT,
+			ATTACH_SIZE
+			)
+		VALUES(SEQ_ATTACH_NUM.NEXTVAL,
+			#{doc_id},
+			#{attach_origin},
+			#{attach_rename},
+			#{link_type},
+			DEFAULT
+			)
+			
+	</insert>
+	
+	<insert id="InsertLinkDocument" parameterType="Document">
+	
+		INSERT INTO REPORT_LINK(
+			LINK_NUM,
+			DOC_ID,
+			EMP_NO,
+			LINK_ID,
+			LINK_TYPE,
+			LINK_DATE,
+			LINK_NO
+			)
+		VALUES(SEQ_LINK_NUM.NEXTVAL,
+			#{doc_id},
+			#{emp_no},
+			DEFAULT,
+			DEFAULT,
+			DEFAULT,
+			#{link_no}
+			)
+			
+	</insert>
+	
+	
+	
+	<!-- 문서 삭제 -->
+	<delete id="documentStatus" parameterType="Document">
+		UPDATE DOCUMENT SET DOC_STATUS = #{doc_status}, DOC_COMPLET_DATE = SYSDATE WHERE DOC_ID = #{doc_id}
+	</delete>
+
+	<delete id="documentLink" parameterType="Document">
+		UPDATE REPORT_LINK SET LINK_TYPE = #{link_type} WHERE LINK_NUM = #{link_num}
+	</delete>
+
+	
+	
+	
+	
+	
+	
+	
+	<select id="getMemberMinList" parameterType="map" resultMap="documentListResultMap">
+		SELECT ROWNUM, 
+		       EMP_NO, 
+			   JOB_CODE, 
+			   DEPT_CODE,
+		  	   EMP_NAME
+		FROM(SELECT E.EMP_NO, 
+				   J.JOB_NAME AS JOB_CODE, 
+				   D.DEPT_TITLE AS DEPT_CODE, 
+		   	   	   E.EMP_NAME
+		           
+				FROM EMPLOYEE E
+		        JOIN JOB J ON(J.JOB_CODE = E.JOB_CODE)
+		        JOIN DEPARtMENT D ON(D.DEPT_ID = E.DEPT_CODE)
+		        
+		        WHERE E.ENROLL_YN = 'Y'
+		        ORDER BY E.EMP_NO DESC
+			)
+	</select>
+	
+	
+		
+		
+		
+		
+	
+	<select id="getLoginMemberInfo" parameterType="map" resultMap="documentListResultMap">
+        SELECT EMP_NO, 
+			   J.JOB_NAME AS JOB_CODE, 
+			   D.DEPT_TITLE AS DEPT_CODE, 
+       		   EMP_ID, 
+    	   	   EMP_NAME, 
+       		   ADMIN_YN
+		FROM EMPLOYEE E
+        JOIN JOB J ON(J.JOB_CODE = E.JOB_CODE)
+        JOIN DEPARtMENT D ON(D.DEPT_ID = E.DEPT_CODE)
+        WHERE EMP_NO = #{no}
+	</select>
+	
+	
+
+</mapper>

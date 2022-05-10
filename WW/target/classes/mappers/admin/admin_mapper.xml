@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ww.mvc.admin.model.dao.AdminMapper">
+
+  	<sql id="memberListSql">
+		SELECT EMP_NO, 
+			   JOB_CODE, 
+			   DEPT_CODE, 
+       		   EMP_ID, 
+	       	   EMP_PWD, 
+    	   	   EMP_NAME, 
+	       	   EMP_EMAIL, 
+       		   EMP_PHONE,  
+       		   SALARY, 
+       		   HIRE_DATE,  
+       		   END_DATE, 
+       		   END_YN, 
+       		   ADMIN_YN, 
+       		   ENROLL_YN, 
+       		   ORIGINAL_PROFILENAME, 
+       		   RENAMED_PROFILENAME, 
+       		   EMP_ADDRESS 	   
+		FROM EMPLOYEE
+	</sql>
+	
+	
+		
+	<resultMap type="Member" id="MemberResultMap">
+		<!-- 테이블에서 기본 키를 의미(primaryKey) -->
+		<id property="no" column="EMP_NO"/>
+		<!-- 테이블에서 일반 컬럼들을 의미 -->
+		<result property="jobCode" column="JOB_CODE"/>
+		<result property="deptCode" column="DEPT_CODE"/>
+		<result property="id" column="EMP_ID"/>
+		<result property="password" column="EMP_PWD"/>
+		<result property="name" column="EMP_NAME"/>
+		<result property="email" column="EMP_EMAIL"/>
+		<result property="phone" column="EMP_PHONE"/>
+		<result property="birth" column="EMP_BIRTH"/>
+		<result property="address" column="EMP_ADDRESS"/>
+		<result property="salary" column="SALARY"/>
+		<result property="hireDate" column="HIRE_DATE"/>
+		<result property="endDate" column="END_DATE"/>
+		<result property="endStatus" column="END_YN"/>
+		<result property="adminStatus" column="ADMIN_YN"/>
+		<result property="enrollStatus" column="ENROLL_YN"/>
+		<result property="originalProfilename" column="ORIGINAL_PROFILENAME"/>
+		<result property="renamedProfilename" column="RENAMED_PROFILENAME"/>
+		<result property="rownum" column="ROWNUM"/>
+	</resultMap>
+	
+ 
+ 
+ 
+
+                                    
+
+	<!-- 문서 검색한 리스트 불러오기 -->
+		<select id="getadminMemberSearchCount" parameterType="map" resultType="_int">
+		SELECT COUNT(*) 
+		FROM (	 
+				
+		SELECT E.EMP_NO, 
+			   J.JOB_NAME AS JOB_CODE, 
+			   D.DEPT_TITLE AS DEPT_CODE, 
+    	   	   E.EMP_NAME, 
+	       	   E.EMP_EMAIL, 
+       		   E.EMP_PHONE,  
+       		   E.ENROLL_YN   
+		FROM EMPLOYEE E
+        JOIN JOB J ON (J.JOB_CODE = E.JOB_CODE)
+        JOIN DEPARTMENT D ON(D.DEPT_ID = E.DEPT_CODE)
+		WHERE E.ENROLL_YN  = 'Y'
+				<if test="type=='name' and search != null and search != '' ">
+					AND E.EMP_NAME LIKE '%'||#{search}||'%'
+				</if>
+				<if test="type=='dept' and search != null and search != '' ">
+					AND D.DEPT_TITLE LIKE '%'||#{search}||'%'
+				</if>
+				<if test="type=='jod' and search != null and search != '' ">
+					AND J.JOB_NAME  LIKE '%'||#{search}||'%'
+				</if>
+				<if test="type=='phone' and search != null and search != '' ">
+					AND E.EMP_PHONE LIKE '%'||#{search}||'%'
+				</if>
+				<if test="type=='email' and search != null and search != '' ">
+					AND E.EMP_EMAIL LIKE '%'||#{search}||'%'
+				</if>
+			)
+		</select>
+		
+		
+		
+		<select id="getadminMemberSearchList" parameterType="map" resultMap="MemberResultMap">
+		SELECT ROWNUM ,EMP_NO, JOB_CODE, DEPT_CODE, EMP_NAME, EMP_EMAIL, EMP_PHONE, ENROLL_YN
+        FROM(
+		SELECT E.EMP_NO, 
+			   J.JOB_NAME AS JOB_CODE, 
+			   D.DEPT_TITLE AS DEPT_CODE, 
+    	   	   E.EMP_NAME, 
+	       	   E.EMP_EMAIL, 
+       		   E.EMP_PHONE,  
+       		   E.ENROLL_YN   
+		FROM EMPLOYEE E
+        JOIN JOB J ON (J.JOB_CODE = E.JOB_CODE)
+        JOIN DEPARTMENT D ON(D.DEPT_ID = E.DEPT_CODE)
+		WHERE E.ENROLL_YN  = 'Y'
+				<if test="type=='name' and search != null and search != '' ">
+					AND E.EMP_NAME LIKE '%'||#{search}||'%'
+				</if>
+				<if test="type=='dept' and search != null and search != '' ">
+					AND D.DEPT_TITLE LIKE '%'||#{search}||'%'
+				</if>
+				<if test="type=='jod' and search != null and search != '' ">
+					AND J.JOB_NAME  LIKE '%'||#{search}||'%'
+				</if>
+				<if test="type=='phone' and search != null and search != '' ">
+					AND E.EMP_PHONE LIKE '%'||#{search}||'%'
+				</if>
+				<if test="type=='email' and search != null and search != '' ">
+					AND E.EMP_EMAIL LIKE '%'||#{search}||'%'
+				</if>
+			ORDER BY E.EMP_NO DESC
+		)
+	</select>
+		
+		
+		
+		
+
+
+</mapper>
