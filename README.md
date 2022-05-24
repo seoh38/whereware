@@ -1,5 +1,6 @@
 # WHEREWARE
 WHEREWHARE는 소규모 기업에서 사용할 수 있는 그룹웨어 프로그램 입니다.
+where + ware = 어디에서나 사용이 가능한 그룹웨어 서비스
 
 
 ## WHEREWARE EMPLOYEE TABLE 
